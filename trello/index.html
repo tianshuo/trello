@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="author" content="TiansHUo tianshuo_at_gmail_dot_com" />
+  <title>Trello Docs</title>
+  <script type="text/javascript" src="js/vendor/jquery-1.7.1.min.js"></script>
+  <script type="text/javascript" src="https://api.trello.com/1/client.js?key=f1cfdc1ed1555da721f28490bcbbd26b"></script>
+  <script type="text/javascript" src="js/vendor/jquery-ui-1.8.11.custom.min.js"></script>
+    <script type="text/javascript" src="js/vendor/underscore-min.js"></script>
+
+  <!--<script type="text/javascript" src="js/vendor/ICanHaz.js"></script>-->
+<script type="text/javascript" src="js/vendor/Mustache.js"></script>
+<script type="text/javascript" src="js/vendor/showdown.js"></script>
+  <!--<script type="text/javascript" src="js/vendor/backbone.debug.js"></script> debug-->
+<style>
+.show{
+	background-color:#777;
+	color:white;
+	padding:4px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+
+.right {
+	position:relative;
+	float:right;
+	right:0;
+	margin-right: 10px;
+}
+
+.yellow{background-color:#d7d742!important;margin-bottom:3px;}
+.orange{background-color:#dd9a3c!important;margin-bottom:3px;}
+.red{background-color:#cc3333!important;margin-bottom:3px;}
+.green{background-color:#22C328!important; margin-bottom:3px;}
+.blue {background-color:#3366cc!important; margin-bottom:3px;}
+.purple {background-color:#8c28bd!important; margin-bottom:3px;}
+
+del{
+color:green
+}
+
+table {
+border:1 black;
+width:90%;
+margin-bottom:50px;
+margin-left:30px;
+background:rgba(255,255,255,0.9);
+border-bottom-right-radius: 10px;
+border-bottom-left-radius: 10px;
+box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+}
+td {
+vertical-align:top;
+text-align:left;
+padding:5px;
+}
+caption {
+text-align:left;
+background:rgba(255,255,255,0.9);
+padding-top:5px;
+padding-left:20px;
+padding-bottom:5px;
+border-top-right-radius: 10px;
+border-top-left-radius: 10px;
+box-shadow: 5px 0px 4px -4px rgba(0,0,0,0.3);
+
+}
+thead {
+border-top:1px #225 solid;
+}
+tbody tr:nth-child(odd)    { background:rgba(0,0,0,0.05); }
+tbody tr:nth-child(even)    { background:rgba(0,0,0,0.10); }
+body { background-color:#164B69;}
+h1 { color:#fff;}
+.list {
+	background:rgba(255,255,255,0.9);
+	border-radius: 10px;
+	box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+	padding:15px;
+	width:320px;
+	float:left;
+	margin-right:20px;
+	margin-bottom:30px;
+}
+
+.comments h2{
+	font-size:1.5em;
+}
+.comments{
+	margin-top:-5px;
+	font-size:0.8em;
+}
+.downloader{
+background: #87e0fd; /* Old browsers */
+background: -moz-linear-gradient(top,  #87e0fd 0%, #53cbf1 40%, #05abe0 100%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#87e0fd), color-stop(40%,#53cbf1), color-stop(100%,#05abe0)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top,  #87e0fd 0%,#53cbf1 40%,#05abe0 100%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(top,  #87e0fd 0%,#53cbf1 40%,#05abe0 100%); /* Opera 11.10+ */
+background: -ms-linear-gradient(top,  #87e0fd 0%,#53cbf1 40%,#05abe0 100%); /* IE10+ */
+background: linear-gradient(top,  #87e0fd 0%,#53cbf1 40%,#05abe0 100%); /* W3C */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87e0fd', endColorstr='#05abe0',GradientType=0 ); /* IE6-9 */
+
+	border-radius: 3px;
+	padding:5px;
+	
+	margin-right:10px;
+	font-size:1em;
+}
+
+.downloader:hover{
+	box-shadow: 0px 0px 15px rgba(255,255,255,0.6);
+	padding:8px;
+	margin-left:-4px;
+	margin-right:8px;
+}
+
+.downloader a{
+	text-decoration:none;
+	color:#fff;
+}
+.downloader a{
+	text-decoration:none;
+}
+</style>
+
+</head>
+<body>
+<div id="view">
+</div>
+<script>
+$(document).ready(function(){
+	var defaultOptions = {
+        scope: {
+            write: false
+        },
+        success: onAuthorize
+    };
+	if(typeof Trello==="undefined") {
+		$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
+	}
+
+
+    /**
+     * Authentication dance
+     *  1. try to get a token from a previous session
+     *  2. if no authorized token found, ask a token
+     *  3. try to fetch the current user, in case of a revoked/expired token
+     *  4. start application
+     */
+    Trello.authorize(_.extend({}, defaultOptions, {
+        interactive: false
+    }));
+
+    if (!Trello.authorized()) {
+        return Trello.authorize(defaultOptions);
+    }
+
+    function onAuthorize() {
+        if (!Trello.authorized()) return Trello.authorize(defaultOptions);
+        Trello.get('/members/me',{boards:"open",organizations:"all"}, function(me) {
+			window.myself=me;
+            router();
+        },function(xhr){
+            if (xhr.status == 401) {
+                Trello.deauthorize();
+                Trello.authorize(defaultOptions);
+            } else {
+                $('<p>').text('Trello error: try to reload the page').appendTo($('body'));
+            }
+        });
+    }
+
+	$(window).bind("hashchange",router);
+});
+
+var router=function(){
+	var hash=location.hash.replace("#","");
+	if (hash!=="")
+	{
+		getBoard(hash);
+	}else {
+		listBoards();
+	}
+}
+
+var listBoards=function(){
+	if(!myself.orgBoards) { // Not initiated yet
+		var categories=_.groupBy(myself.boards,function(board){ // Categories Boards
+			var id=board.idOrganization?board.idOrganization:"";
+			return id;
+		});
+		var orgList=_.groupBy(myself.organizations,function(org){ // Map orgId-orgName
+			return org.id;
+		});
+
+		myself.orgBoards=_.map(categories,function(value,key){ // Create Array of Organizations containing Array of Boards
+			var list={};
+			list.boards=value;
+			list.name=(key!="")?orgList[key][0].displayName:"Personal";
+			return list;
+		});
+	}
+
+	$("#view").empty();
+	var template="<h1>{{fullName}} ({{username}})</h1>{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<li><a href='#{{id}}'>{{name}}</a></li>{{/boards}}</ul></div>{{/orgBoards}}"
+	var str=Mustache.render(template,myself);
+	$("#view").html(str);
+}
+
+var getBoard=function(board){
+  $("#view").empty();
+  $("#view").html("<h1>Loading ...</h1>");
+  Trello.get("/boards/"+board,{cards:"open",lists:"open",checklists:"all",members:"all"},function(board){
+	$("#view").html("<h1>Loading ...OK!!</h1>");
+	window.doc=board; //debug
+	window.title=board.name;
+	_.each(board.cards,function(card){ //iterate on cards
+		_.each(card.idChecklists,function(listId){ //iterate on checklists
+			var list=_.find(board.checklists,function(check){ //Find list
+				return check.id==listId;
+				});
+			if(!list){
+				console.error(listId+" not found");
+				return;
+			}
+			list.doneNumber=0;
+			list.totalNumber=list.checkItems.length || 0;
+			_.each(list.checkItems,function(item){ //Check complete
+				item.complete=_.find(card.checkItemStates, function(state){
+					if (state.idCheckItem==item.id&&state.state=="complete")
+					{
+						list.doneNumber++;
+						return true;
+					}
+					return false;
+				});
+			});
+			list.done=(list.doneNumber==list.totalNumber);
+			var template="<div><b>{{name}}</b> <span class='show right {{#done}}green{{/done}}'>{{doneNumber}}/{{totalNumber}}</span></div><ul>{{#checkItems}}<li>{{#complete}}<del>{{/complete}}{{name}}{{#complete}}</del>{{/complete}}</li>{{/checkItems}}</ul>"
+			var str=Mustache.render(template,list);
+
+			card.checklist=card.checklist||[]; //Make array
+			card.checklist.push(str);
+		});//iterate on checklists
+
+		card.members=_.map(card.idMembers,function(id){ // iterate on members
+			var member=_.find(board.members, function(m) {
+				return m.id==id;
+			});
+			return member.username;
+		});// iterate on members
+	});//iterate on cards
+
+	// Second Init Cards
+	var listofcards=_.groupBy(board.cards, function(card){
+		return card.idList;
+	});
+	_.each(board.lists,function(list){
+		list.cards=listofcards[list.id];
+		list.size=list.cards?list.cards.length:0;
+		list.show=(list.size>0);
+	});
+	log(board);
+
+	// Date function
+	board.formatDate=function(){
+		return function(text){
+			var date;
+			switch(text){
+			case "":
+				return "None";
+			case "now":
+				date=new Date();
+				break;
+			default:
+				date=new Date(text);
+			}
+			return date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+		};
+	}
+	board.formatComments=function(){
+		var converter = new Showdown.converter();
+		return converter.makeHtml;
+	}		
+	//
+	// Start Rendering
+	board.displayColumns=["Name","Description","Due Date","Checklists","Members","Labels","Votes"];
+	var template="<h1><span id='download'></span>{{name}} <span class='right'>{{#formatDate}}now{{/formatDate}}</span></h1>{{#lists}}<table><caption><h2>{{name}} <span class='show right'>{{size}}</span></h2></caption>{{#show}}<col width='20%' /><col width='30%' /><col width='5%' /><col width='25%' /><col width='5%' /><col width='10%' /><col width='5%' /><thead><tr>{{#displayColumns}}<th scope='col'>{{.}}</th>{{/displayColumns}}</tr></thead>{{/show}}<tbody>{{#cards}}<tr><td scope='row'><b>{{name}}</b></td><td><div class='comments'>{{#formatComments}}{{desc}}{{/formatComments}}</div></td><td>{{#formatDate}}{{due}}{{/formatDate}}</td><td>{{#checklist}}<div>{{{.}}}</div>{{/checklist}}</td><td>{{#members}}<div>{{.}}</div>{{/members}}</td><td>{{#labels}}<div class='show {{color}}'>{{name}}&nbsp;</div>{{/labels}}</td><td>{{badges.votes}}</td></tr>{{/cards}}</tbody></table>{{/lists}}"
+
+	var str=Mustache.render(template,board);
+	$("#view").html(str);
+	//log(str);
+	var download="<html><head><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
+	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
+	var button=$("#download");
+	button.addClass("downloader");
+	button.html("<a href=data:text/html;charset=utf-8,"+encodeURIComponent(download)+" download='"+board.name+"_"+board.formatDate()("now")+".html'>下载</a>");
+	//button.click(function(){location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);});
+	});
+}
+
+var log=function(text){
+  console.log(text);
+}
+</script>
+</body>
+</html>
