@@ -1,357 +1,15 @@
-// init
-var App = {
-    model: {},
-    collection: {},
-    view: {},
-};
-
-/**
- * Current User model
- */
-App.model.CurrentUser = Backbone.Model.extend({
-    sync: function(method, model, options) {
-        if (method == 'read') {
-            return Trello.get('/members/me', {}, options.success, options.error);
-        } else {
-            throw "not (yet) supported";
-        }
-    }
-});
-
-/**
- * Card model
- */
-App.model.Card = Backbone.Model.extend({
-
-    sync: function(method, model, options) {
-        if (method == 'read') {
-            // only support update due date
-            return Trello.put('/cards/'+ model.id, {}, options.success, options.error);
-        } else {
-            throw "not (yet) supported";
-        }
-    }
-});
-
-/**
- * Cards collection
- */
-App.collection.Cards = Backbone.Collection.extend({
-    model: App.model.Card,
-
-    initialize: function(models, options) {
-        this.options = options;
-    },
-
-    sync: function(method, model, options) {
-        if (method == 'read') {
-            return Trello.get('/boards/'+ this.options.board.id +'/cards', {badges: true}
-				, options.success, options.error);
-        } else {
-            throw "not (yet) supported";
-        }
-    }
-});
-
-/**
- * List model
- */
-App.model.List = Backbone.Model.extend({
-
-    sync: function(method, model, options) {
-        if (method == 'read') {
-            // only support update due date
-            return Trello.put('/lists/'+ model.id, {}, options.success, options.error);
-        } else {
-            throw "not (yet) supported";
-        }
-    }
-});
-
-/**
- * Lists collection
- */
-App.collection.Lists = Backbone.Collection.extend({
-    model: App.model.List,
-
-    initialize: function(models, options) {
-        this.options = options;
-    },
-
-    sync: function(method, model, options) {
-        if (method == 'read') {
-            return Trello.get('/boards/'+ this.options.board.id +'/lists', {badges: true}
-				, options.success, options.error);
-        } else {
-            throw "not (yet) supported";
-        }
-    }
-});
-
-/**
- * Board model
- */
-App.model.Board = Backbone.Model.extend({
-    defaults: {
-        hidden: false
-    },
-
-    initialize: function() {
-        this._cards = new App.collection.Cards([], {board: this});
-		// this.hidden = true; 
-    },
-
-    cards: function() {
-        return this._cards;
-    },
-
-    _getValue: function(defaultValue) {
-        return defaultValue;
-    }
-});
-
-/**
- * Board collection
- */
-App.collection.Boards = Backbone.Collection.extend({
-    model: App.model.Board,
-	/*comparator: function(mode) {
-		return model.get('*/
-    sync: function(method, model, options) {
-        if (method == 'read') {
-            return Trello.get('/members/my/boards', {filter: 'open'}, options.success, options.error); //TODO: Change to support organization
-        } else {
-            throw "not (yet) supported";
-        }
-    }
-});
-
-/**
- * Render a card
- */
-App.view.Card = Backbone.View.extend({
-    initialize: function() {
-        this.model.on('change', this.render, this);
-    },
-
-    render: function() {
-        if (this.model.get('hidden')) {
-            //this.$el.fullCalendar('removeEvents', this.model.id);
-			console.log("hide:"+this.model.get('name'));
-        } else {
-            //this.$el.fullCalendar('removeEvents', this.model.id);
-            /*this.$el.fullCalendar('renderEvent', {
-                backboneModel: this.model,
-                id: this.model.id,
-                allDay: false,
-                title: this.model.get('name'),
-                start: this.model.get('badges').due,
-                color: this.model.boardColor(),
-                url: this.model.get('url')
-            }, true);*/
-			console.log("show:"+this.model.get('name'));
-        }
-        return this;
-    },
-
-    remove: function() {
-        console.log("hide:"+this.model.get('name'));
-		//this.$el.fullCalendar('removeEvents', this.model.id);
-    }
-});
-
-/**
- * Render cards of one board
- */
-App.view.CardsBoard = Backbone.View.extend({
-    initialize: function() {
-        this.views = [];
-        this.model.cards().on('reset', this.render, this);
-    },
-
-    render: function() {
-        // remove previously events
-        _(this.views).each(function(view) {
-            view.remove();
-        });
-        this.views = this.model.cards().chain().map(_.bind(function(card) {
-            // no arm, no chocolate
-            // if (!card.get('badges').due) return;
-            return new App.view.Card({model: card,
-                                      el: this.el}).render();
-        }, this)).filter(function(view) {
-            return view;
-        }).value();
-        return this;
-    }
-});
-
-
-/**
- * Render all cards from all boards
- */
-App.view.Cards = Backbone.View.extend({
-    initialize: function() {
-        this.collection.on('reset', this.render, this);
-    },
-
-    render: function() {
-        this.collection.each(_.bind(function(board) {
-            new App.view.CardsBoard({model: board,
-                                     el: this.el}).render();
-        }, this));
-        return this;
-    }
-});
-
-
-
-/**
- * Render a board filter
- */
-App.view.Board = Backbone.View.extend({
-	/*initialize: function() {
-		this.model.set({hidden: true});
-	},*/
-	events: {
-        "click input": "click"
-    },
-
-    tagName: 'label',
-
-    click: function(e) {
-        var hidden = !$(e.target).is(':checked');
-        this.model.set({hidden: hidden});
-        this.$el.toggleClass('checked');  //TODO: Change this
-    },
-
-    render: function() {
-        var input = this.make('input', {type: 'checkbox',
-                                        value: this.model.id,
-                                        checked: !this.model.get('hidden')});
-        this.$el.css({'background-color': 'green'}) //changed
-                .attr('title', 'Show cards from the board '+  this.model.get('name'))
-                .text(this.model.get('name'))
-                .append(input);
-        if (!this.model.get('hidden') === true)
-            this.$el.addClass('checked');
-        return this;
-    }
-});
-
-
-/**
- * List of boards filters
- */
-App.view.Boards = Backbone.View.extend({
-    initialize: function() {
-        this.collection.on('reset', this.render, this);
-    },
-
-    render: function() {
-        this.collection.each(_.bind(function(board) {
-            var view = new App.view.Board({model: board}).render();
-            $(view.el).appendTo(this.el);
-        }, this));
-    }
-});
-
-/**
- * Main view
- */
-App.view.Doc = Backbone.View.extend({
-    events: {
-        'click .quit': 'quit'
-    },
-
-    initialize: function() {
-        this.boards = new App.collection.Boards();
-        this.currentUser = this.options.currentUser;
-
-        this.boards.on('reset', this._getCards, this);
-        this.boards.on('change:hidden', this._updateBoardVisibility, this);
-        this.boards.fetch();
-    },
-
-    render: function() {
-        this._createDocument();
-        new App.view.Boards({collection: this.boards,
-                             el: this.$('#boards').get(0)}).render();
-        new App.view.Cards({collection: this.boards,
-                            el: this.$('#documents').get(0)}).render();
-        
-        $(this.make('a', {'class': 'quit',
-                          href: '#'}, '登出')).appendTo(this.el);
-        return this;
-    },
-
-    quit: function(e) {
-        e.preventDefault();
-        Trello.deauthorize();
-        location.reload();
-    },
-
-    _updateBoardsVisibility: function() {
-        this.boards.each(_.bind(function(board) {
-            this._updateBoardVisibility(board);
-        }, this));
-    },
-
-    _updateBoardVisibility: function(board) {
-        board.cards().each(_.bind(function(card) {
-            var hidden = board.get('hidden');
-            card.set({hidden: hidden});
-        }, this));
-    },
-
-    _getCards: function() {
-        this.boards.each(_.bind(function(board) {
-            board.cards().on('reset', _.bind(this._updateBoardVisibility, this, board));
-            board.cards().fetch(); //{not_archived: this.prefs.get('not_archived')});
-        }, this));
-    },
-
-    _createDocument: function() {
-        var calendar = this.$('#calendar').fullCalendar({
-            header: {
-	        left: 'prev,next today',
-	        center: 'title',
-	        right: 'month,agendaWeek,agendaDay'
-	    },
-            height: $(document).height() - 50,
-            editable: true,
-            disableResizing: true,
-            ignoreTimezone: false,
-            timeFormat: "H'h'(mm)",
-            eventAfterRender: function(event, element, view) {
-                $(element).attr('title', event.backboneModel.get('desc'));
-            },
-            eventDrop: function(event, dayDelta, minuteDelta, allDay, revertFunc) {
-                var card = event.backboneModel;
-                var date = moment(event.start).format("YYYY-MM-DDTHH:mm:ssZ");
-                var badges = _.extend({}, card.get('badges'), {due: date});
-                card.set({badges: badges});
-                card.save();
-            }
-        });
-    }
-});
-
-$(document).ready(function() {
-    var defaultOptions = {
+$(document).ready(function(){
+	var defaultOptions = {
         scope: {
             write: false
         },
         success: onAuthorize
     };
-    /**
-     * Authentication dance
-     *  1. try to get a token from a previous session
-     *  2. if no authorized token found, ask a token
-     *  3. try to fetch the current user, in case of a revoked/expired token
-     *  4. start application
-     */
-    Trello.authorize(_.extend({}, defaultOptions, {
+	if(typeof Trello==="undefined") {
+		$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
+	}
+
+	Trello.authorize(_.extend({}, defaultOptions, {// Authentication
         interactive: false
     }));
 
@@ -361,16 +19,143 @@ $(document).ready(function() {
 
     function onAuthorize() {
         if (!Trello.authorized()) return Trello.authorize(defaultOptions);
-        var currentUser = new App.model.CurrentUser();
-        currentUser.fetch().done(function() {
-            GlobalDoc=new App.view.Doc({el: $('body').get(0), currentUser: currentUser}).render();
-        }).fail(function(xhr) {
+        Trello.get('/members/me',{boards:"open",organizations:"all"}, function(me) {
+			window.myself=me;
+            router();
+        },function(xhr){
             if (xhr.status == 401) {
                 Trello.deauthorize();
                 Trello.authorize(defaultOptions);
             } else {
-                $('<p>').text('Trello error: try to reload the page').appendTo($('body'));
+				$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
             }
         });
     }
+
+	$(window).bind("hashchange",router);
 });
+
+var router=function(){
+	var hash=location.hash.replace("#","");
+	if (hash!=="")
+	{
+		getBoard(hash);
+	}else {
+		listBoards();
+	}
+}
+
+var listBoards=function(){
+	if(!myself.orgBoards) { // Not initiated yet
+		var categories=_.groupBy(myself.boards,function(board){ // Categories Boards
+			var id=board.idOrganization?board.idOrganization:"";
+			return id;
+		});
+		var orgList=_.groupBy(myself.organizations,function(org){ // Map orgId-orgName
+			return org.id;
+		});
+
+		myself.orgBoards=_.map(categories,function(value,key){ // Create Array of Organizations containing Array of Boards
+			var list={};
+			list.boards=value;
+			list.name=(key!="")?orgList[key][0].displayName:"Personal";
+			return list;
+		});
+	}
+
+	$("#view").empty();
+	var template="<h1>{{fullName}} ({{username}})</h1>{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<li><a href='#{{id}}'>{{name}}</a></li>{{/boards}}</ul></div>{{/orgBoards}}"
+	var str=Mustache.render(template,myself);
+	$("#view").html(str);
+}
+
+var getBoard=function(board){
+  $("#view").empty();
+  $("#view").html("<h1>Loading ...</h1>");
+  Trello.get("/boards/"+board,{cards:"open",lists:"open",checklists:"all",members:"all"},function(board){
+	$("#view").html("<h1>Loading ...OK!!</h1>");
+	window.doc=board; //debug
+	window.title=board.name;
+	_.each(board.cards,function(card){ //iterate on cards
+		_.each(card.idChecklists,function(listId){ //iterate on checklists
+			var list=_.find(board.checklists,function(check){ //Find list
+				return check.id==listId;
+				});
+			if(!list){
+				console.error(listId+" not found");
+				return;
+			}
+			list.doneNumber=0;
+			list.totalNumber=list.checkItems.length || 0;
+			_.each(list.checkItems,function(item){ //Check complete
+				item.complete=_.find(card.checkItemStates, function(state){
+					if (state.idCheckItem==item.id&&state.state=="complete")
+					{
+						list.doneNumber++;
+						return true;
+					}
+					return false;
+				});
+			});
+			list.done=(list.doneNumber==list.totalNumber);
+			var template="<div><b>{{name}}</b> <span class='show right {{#done}}green{{/done}}'>{{doneNumber}}/{{totalNumber}}</span></div><ul>{{#checkItems}}<li>{{#complete}}<del>{{/complete}}{{name}}{{#complete}}</del>{{/complete}}</li>{{/checkItems}}</ul>"
+			var str=Mustache.render(template,list);
+
+			card.checklist=card.checklist||[]; //Make array
+			card.checklist.push(str);
+		});//iterate on checklists
+
+		card.members=_.map(card.idMembers,function(id){ // iterate on members
+			var member=_.find(board.members, function(m) {
+				return m.id==id;
+			});
+			return member.username;
+		});// iterate on members
+	});//iterate on cards
+
+	// Second Init Cards
+	var listofcards=_.groupBy(board.cards, function(card){
+		return card.idList;
+	});
+	_.each(board.lists,function(list){
+		list.cards=listofcards[list.id];
+		list.size=list.cards?list.cards.length:0;
+		list.show=(list.size>0);
+	});
+	console.log(board);
+
+	// Date function
+	board.formatDate=function(){
+		return function(text){
+			var date;
+			switch(text){
+			case "":
+				return "None";
+			case "now":
+				date=new Date();
+				break;
+			default:
+				date=new Date(text);
+			}
+			return date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+		};
+	}
+	board.formatComments=function(){
+		var converter = new Showdown.converter();
+		return converter.makeHtml;
+	}		
+	//
+	// Start Rendering
+	board.displayColumns=["Name","Description","Due Date","Checklists","Members","Labels","Votes"];
+	var template="<h1><span id='download'></span>{{name}} <span class='right'>{{#formatDate}}now{{/formatDate}}</span></h1>{{#lists}}<table><caption><h2>{{name}} <span class='show right'>{{size}}</span></h2></caption>{{#show}}<col width='20%' /><col width='30%' /><col width='5%' /><col width='25%' /><col width='5%' /><col width='10%' /><col width='5%' /><thead><tr>{{#displayColumns}}<th scope='col'>{{.}}</th>{{/displayColumns}}</tr></thead>{{/show}}<tbody>{{#cards}}<tr><td scope='row'><b>{{name}}</b></td><td><div class='comments'>{{#formatComments}}{{desc}}{{/formatComments}}</div></td><td>{{#formatDate}}{{due}}{{/formatDate}}</td><td>{{#checklist}}<div>{{{.}}}</div>{{/checklist}}</td><td>{{#members}}<div>{{.}}</div>{{/members}}</td><td>{{#labels}}<div class='show {{color}}'>{{name}}&nbsp;</div>{{/labels}}</td><td>{{badges.votes}}</td></tr>{{/cards}}</tbody></table>{{/lists}}"
+
+	var str=Mustache.render(template,board);
+	$("#view").html(str);
+	var download="<html><head><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
+	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
+	var button=$("#download");
+	button.addClass("downloader");
+	button.html("<a href=data:text/html;charset=utf-8,"+encodeURIComponent(download)+" download='"+board.name+"_"+board.formatDate()("now")+".html'>下载</a>");
+	//button.click(function(){location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);});
+	});
+}
