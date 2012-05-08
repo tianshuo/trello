@@ -151,6 +151,8 @@ var getBoard=function(board){
 
 	var str=Mustache.render(template,board);
 	$("#view").html(str);
+
+	// Download Button
 	var download="<html><head><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
 	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
 	var button=$("#download");
@@ -158,8 +160,8 @@ var getBoard=function(board){
 	button.text("Download");
 	button.click(function(){
 		var bb=new BlobBuilder;
-		bb.append(str);
-		var filesaver=saveAs(bb.getBlob("text/html;charset=utf-8"),board.name+"_"+board.formatDate('now')+".html");
+		bb.append(download);
+		var filesaver=saveAs(bb.getBlob("text/html;charset=utf-8"),board.name+"_"+board.formatDate()('now')+".html");
 	});
 	//button.click(function(){location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);});
 	});
