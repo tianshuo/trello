@@ -155,7 +155,12 @@ var getBoard=function(board){
 	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
 	var button=$("#download");
 	button.addClass("downloader");
-	button.html("<a href=data:text/html;charset=utf-8,"+encodeURIComponent(download)+" download='"+board.name+"_"+board.formatDate()("now")+".html'>下载</a>");
+	button.text("Download");
+	button.click(function(){
+		var bb=new BlobBuilder;
+		bb.append(str);
+		var filesaver=saveAs(bb.getBlob("text/html;charset=utf-8"),board.name+"_"+board.formatDate('now')+".html");
+	});
 	//button.click(function(){location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);});
 	});
 }
