@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="author" content="TiansHUo tianshuo_at_gmail_dot_com" />
+<link rel="icon" href="favicon.png" />
 <title>Export Trello Docs</title>
 <script type="text/javascript" src="js/vendor/jquery-1.7.1.min.js"></script>
 <script type="text/javascript" src="https://api.trello.com/1/client.js?key=f1cfdc1ed1555da721f28490bcbbd26b"></script>
@@ -19,6 +20,9 @@
 	color:white;
 	padding:4px;
 	-moz-border-radius: 5px;
+	-ms-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-o-border-radius: 5px;
 	border-radius: 5px;
 }
 
@@ -29,12 +33,12 @@
 	margin-right: 10px;
 }
 
-.yellow{background-color:#d7d742!important;margin-bottom:3px;}
-.orange{background-color:#dd9a3c!important;margin-bottom:3px;}
-.red{background-color:#cc3333!important;margin-bottom:3px;}
-.green{background-color:#22C328!important; margin-bottom:3px;}
-.blue {background-color:#3366cc!important; margin-bottom:3px;}
-.purple {background-color:#8c28bd!important; margin-bottom:3px;}
+.yellow{background-color:#d7d742;margin-bottom:3px;}
+.orange{background-color:#dd9a3c;margin-bottom:3px;}
+.red{background-color:#cc3333;margin-bottom:3px;}
+.green{background-color:#22C328; margin-bottom:3px;}
+.blue {background-color:#3366cc; margin-bottom:3px;}
+.purple {background-color:#8c28bd; margin-bottom:3px;}
 
 del{
 color:green
@@ -45,7 +49,15 @@ border:1 black;
 width:90%;
 margin-bottom:50px;
 margin-left:30px;
-background:rgba(255,255,255,0.9);
+background:rgb(233,238,241);
+-moz-border-bottom-right-radius: 10px;
+-moz-border-bottom-left-radius: 10px;
+-ms-border-bottom-right-radius: 10px;
+-ms-border-bottom-left-radius: 10px;
+-webkit-border-bottom-right-radius: 10px;
+-webkit-border-bottom-left-radius: 10px;
+-o-border-bottom-right-radius: 10px;
+-o-border-bottom-left-radius: 10px;
 border-bottom-right-radius: 10px;
 border-bottom-left-radius: 10px;
 box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
@@ -57,24 +69,32 @@ padding:5px;
 }
 caption {
 text-align:left;
-background:rgba(255,255,255,0.9);
+background:rgb(233,238,241);
 padding-top:5px;
 padding-left:20px;
 padding-bottom:5px;
+-moz-border-top-right-radius: 10px;
+-moz-border-top-left-radius: 10px;
+-ms-border-top-right-radius: 10px;
+-ms-border-top-left-radius: 10px;
+-webkit-border-top-right-radius: 10px;
+-webkit-border-top-left-radius: 10px;
+-o-border-top-right-radius: 10px;
+-o-border-top-left-radius: 10px;
 border-top-right-radius: 10px;
 border-top-left-radius: 10px;
-box-shadow: 5px 0px 4px -4px rgba(0,0,0,0.3);
+box-shadow: 5px 0 4px -4px rgba(0,0,0,0.3);
 
 }
 thead {
 border-top:1px #225 solid;
 }
-tbody tr:nth-child(odd)    { background:rgba(0,0,0,0.05); }
-tbody tr:nth-child(even)    { background:rgba(0,0,0,0.10); }
+tbody tr:nth-child(odd)    { background:rgb(222,226,229); }
+tbody tr:nth-child(even)    { background:rgb(210,214,217); }
 body { background-color:#164B69;}
 h1 { color:#fff;}
 .list {
-	background:rgba(255,255,255,0.9);
+	background:rgb(233,238,241);
 	border-radius: 10px;
 	box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
 	padding:15px;
@@ -113,6 +133,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87e0fd', end
 	padding:8px;
 	margin-left:-4px;
 	margin-right:8px;
+	cursor:pointer;
 }
 
 .downloader{

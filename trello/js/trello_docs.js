@@ -1,4 +1,8 @@
 $(document).ready(function(){
+	console=console || {};
+	console.log=console.log || function(){};
+	console.error=console.error || function(){};
+	if (!console.error) {console.log = function() {};}
 	var defaultOptions = {
         scope: {
             write: false
@@ -43,10 +47,10 @@ var router=function(){
 	}else {
 		listBoards();
 	}
-}
+};
 
 var listBoards=function(){
-	if(!myself.orgBoards) { // Not initiated yet
+	if(myself && !myself.orgBoards) { // Not initiated yet
 		var categories=_.groupBy(myself.boards,function(board){ // Categories Boards
 			var id=board.idOrganization?board.idOrganization:"";
 			return id;
@@ -58,16 +62,16 @@ var listBoards=function(){
 		myself.orgBoards=_.map(categories,function(value,key){ // Create Array of Organizations containing Array of Boards
 			var list={};
 			list.boards=value;
-			list.name=(key!="")?orgList[key][0].displayName:"Personal";
+			list.name=(key!==""||key===null)?orgList[key][0].displayName:"Personal";
 			return list;
 		});
 	}
 
 	$("#view").empty();
-	var template="<h1>{{fullName}} ({{username}})</h1>{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<li><a href='#{{id}}'>{{name}}</a></li>{{/boards}}</ul></div>{{/orgBoards}}"
+	var template="<h1>{{fullName}} ({{username}})</h1>{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<li><a href='#{{id}}'>{{name}}</a></li>{{/boards}}</ul></div>{{/orgBoards}}";
 	var str=Mustache.render(template,myself);
 	$("#view").html(str);
-}
+};
 
 var getBoard=function(board){
   $("#view").empty();
@@ -98,7 +102,7 @@ var getBoard=function(board){
 				});
 			});
 			list.done=(list.doneNumber==list.totalNumber);
-			var template="<div><b>{{name}}</b> <span class='show right {{#done}}green{{/done}}'>{{doneNumber}}/{{totalNumber}}</span></div><ul>{{#checkItems}}<li>{{#complete}}<del>{{/complete}}{{name}}{{#complete}}</del>{{/complete}}</li>{{/checkItems}}</ul>"
+			var template="<div><b>{{name}}</b> <span class='show right {{#done}}green{{/done}}'>{{doneNumber}}/{{totalNumber}}</span></div><ul>{{#checkItems}}<li>{{#complete}}<del>{{/complete}}{{name}}{{#complete}}</del>{{/complete}}</li>{{/checkItems}}</ul>";
 			var str=Mustache.render(template,list);
 
 			card.checklist=card.checklist||[]; //Make array
@@ -139,30 +143,31 @@ var getBoard=function(board){
 			}
 			return date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
 		};
-	}
+	};
 	board.formatComments=function(){
 		var converter = new Showdown.converter();
 		return converter.makeHtml;
-	}		
+	};		
 	//
 	// Start Rendering
 	board.displayColumns=["Name","Description","Due Date","Checklists","Members","Labels","Votes"];
-	var template="<h1><span id='download'></span>{{name}} <span class='right'>{{#formatDate}}now{{/formatDate}}</span></h1>{{#lists}}<table><caption><h2>{{name}} <span class='show right'>{{size}}</span></h2></caption>{{#show}}<col width='20%' /><col width='30%' /><col width='5%' /><col width='25%' /><col width='5%' /><col width='10%' /><col width='5%' /><thead><tr>{{#displayColumns}}<th scope='col'>{{.}}</th>{{/displayColumns}}</tr></thead>{{/show}}<tbody>{{#cards}}<tr><td scope='row'><b>{{name}}</b></td><td><div class='comments'>{{#formatComments}}{{desc}}{{/formatComments}}</div></td><td>{{#formatDate}}{{due}}{{/formatDate}}</td><td>{{#checklist}}<div>{{{.}}}</div>{{/checklist}}</td><td>{{#members}}<div>{{.}}</div>{{/members}}</td><td>{{#labels}}<div class='show {{color}}'>{{name}}&nbsp;</div>{{/labels}}</td><td>{{badges.votes}}</td></tr>{{/cards}}</tbody></table>{{/lists}}"
+	var template="<h1><span id='download'></span>{{name}} <span class='right'>{{#formatDate}}now{{/formatDate}}</span></h1>{{#lists}}<table><caption><h2>{{name}} <span class='show right'>{{size}}</span></h2></caption>{{#show}}<col width='20%' /><col width='30%' /><col width='5%' /><col width='25%' /><col width='5%' /><col width='10%' /><col width='5%' /><thead><tr>{{#displayColumns}}<th scope='col'>{{.}}</th>{{/displayColumns}}</tr></thead>{{/show}}<tbody>{{#cards}}<tr><td scope='row'><b>{{name}}</b></td><td><div class='comments'>{{#formatComments}}{{desc}}{{/formatComments}}</div></td><td>{{#formatDate}}{{due}}{{/formatDate}}</td><td>{{#checklist}}<div>{{{.}}}</div>{{/checklist}}</td><td>{{#members}}<div>{{.}}</div>{{/members}}</td><td>{{#labels}}<div class='show {{color}}'>{{name}}&nbsp;</div>{{/labels}}</td><td>{{badges.votes}}</td></tr>{{/cards}}</tbody></table>{{/lists}}";
 
 	var str=Mustache.render(template,board);
 	$("#view").html(str);
 
 	// Download Button
-	var download="<html><head><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
+	var download="<!DOCTYPE html><html><head><meta charset='utf-8' /><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
 	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
 	var button=$("#download");
 	button.addClass("downloader");
 	button.text("Download");
 	button.click(function(){
-		var bb=new BlobBuilder;
+		console.log("saving..");
+		var bb=new BlobBuilder();
 		bb.append(download);
 		var filesaver=saveAs(bb.getBlob("text/html;charset=utf-8"),board.name+"_"+board.formatDate()('now')+".html");
 	});
 	//button.click(function(){location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);});
 	});
-}
+};
