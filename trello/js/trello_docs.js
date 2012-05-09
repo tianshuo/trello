@@ -7,7 +7,7 @@ $(document).ready(function(){
         scope: {
             write: false
         },
-        success: onAuthorize
+        success: initDoc
     };
 	if(typeof Trello==="undefined") {
 		$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
@@ -20,24 +20,24 @@ $(document).ready(function(){
     if (!Trello.authorized()) {
         return Trello.authorize(defaultOptions);
     }
-
-    function onAuthorize() {
-        if (!Trello.authorized()) return Trello.authorize(defaultOptions);
-        Trello.get('/members/me',{boards:"open",organizations:"all"}, function(me) {
-			window.myself=me;
-            router();
-        },function(xhr){
-            if (xhr.status == 401) {
-                Trello.deauthorize();
-                Trello.authorize(defaultOptions);
-            } else {
-				$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
-            }
-        });
-    }
-
+    
 	$(window).bind("hashchange",router);
 });
+
+var initDoc=function () {
+	if (!Trello.authorized()) return Trello.authorize(defaultOptions);
+	Trello.get('/members/me',{boards:"open",organizations:"all"}, function(me) {
+		window.myself=me;
+		router();
+	},function(xhr){
+		if (xhr.status == 401) {
+			Trello.deauthorize();
+			Trello.authorize(defaultOptions);
+		} else {
+			$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
+		}
+	});
+};
 
 var router=function(){
 	var hash=location.hash.replace("#","");
@@ -45,12 +45,16 @@ var router=function(){
 	{
 		getBoard(hash);
 	}else {
-		listBoards();
+		if(window.myself){
+			listBoards();
+		}else{
+			initDoc();
+		}
 	}
 };
 
 var listBoards=function(){
-	if(myself && !myself.orgBoards) { // Not initiated yet
+	if(!myself.orgBoards) { // Not initiated yet
 		var categories=_.groupBy(myself.boards,function(board){ // Categories Boards
 			var id=board.idOrganization?board.idOrganization:"";
 			return id;
