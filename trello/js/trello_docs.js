@@ -1,8 +1,10 @@
+// Okay I admit the code is ugly...
+if (typeof console === "undefined" || typeof console.log === "undefined") {
+ console = {};
+ console.log = function() {};
+}
+
 $(document).ready(function(){
-	console=console || {};
-	console.log=console.log || function(){};
-	console.error=console.error || function(){};
-	if (!console.error) {console.log = function() {};}
 	var defaultOptions = {
         scope: {
             write: false
@@ -34,7 +36,7 @@ var initDoc=function () {
 			Trello.deauthorize();
 			Trello.authorize(defaultOptions);
 		} else {
-			$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:window.reload();'>Reload</a></h1>");
+			$("#view").html("<h1>Connection to Trello API is broken, Please <a href='javascript:reload();'>Reload</a></h1>");
 		}
 	});
 };
@@ -72,9 +74,14 @@ var listBoards=function(){
 	}
 
 	$("#view").empty();
-	var template="<h1>{{fullName}} ({{username}})</h1>{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<li><a href='#{{id}}'>{{name}}</a></li>{{/boards}}</ul></div>{{/orgBoards}}";
+	var intro="<div class='list'><h2>About Trello2HTML</h2><p>This is an web app to export Trello Boards to HTML, our team uses this to record our progress every month. We do not track or record you any way, and Trello access is read-only. You can host this on any static server. Google Chrome is tested and supported, your mileage may vary with other browsers.</p><ul><a href='#4d5ea62fd76aa1136000000c'><li>Demo using Trello Development</li></a><a href='trello.zip'><li>Download zipped source</li></a><a href='https://trello.com/board/trello2html/4fb10d0e312c2b226f1eb4a0'><li>Feature Requests and Bug Reports</li></a><a href='http://tianshuohu.diandian.com/post/2012-06-08/Trello-Export-as-html'><li>Blog Article (Chinese/English)</li></a></ul></div>";
+	var template="<h1>{{fullName}} ({{username}})</h1><div id='boardlist'>"+intro+"{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<a href='#{{id}}' ><li>{{name}}</li></a>{{/boards}}</ul></div>{{/orgBoards}}</div>";
 	var str=Mustache.render(template,myself);
 	$("#view").html(str);
+	$("#boardlist").masonry({
+		itemSelector:'.list'
+	});
+
 };
 
 var getBoard=function(board){
@@ -90,7 +97,7 @@ var getBoard=function(board){
 				return check.id==listId;
 				});
 			if(!list){
-				console.error(listId+" not found");
+				console.log("ERROR:"+listId+" not found");
 				return;
 			}
 			list.doneNumber=0;
@@ -155,23 +162,31 @@ var getBoard=function(board){
 	//
 	// Start Rendering
 	board.displayColumns=["Name","Description","Due Date","Checklists","Members","Labels","Votes"];
-	var template="<h1><span id='download'></span>{{name}} <span class='right'>{{#formatDate}}now{{/formatDate}}</span></h1>{{#lists}}<table><caption><h2>{{name}} <span class='show right'>{{size}}</span></h2></caption>{{#show}}<col width='20%' /><col width='30%' /><col width='5%' /><col width='25%' /><col width='5%' /><col width='10%' /><col width='5%' /><thead><tr>{{#displayColumns}}<th scope='col'>{{.}}</th>{{/displayColumns}}</tr></thead>{{/show}}<tbody>{{#cards}}<tr><td scope='row'><b>{{name}}</b></td><td><div class='comments'>{{#formatComments}}{{desc}}{{/formatComments}}</div></td><td>{{#formatDate}}{{due}}{{/formatDate}}</td><td>{{#checklist}}<div>{{{.}}}</div>{{/checklist}}</td><td>{{#members}}<div>{{.}}</div>{{/members}}</td><td>{{#labels}}<div class='show {{color}}'>{{name}}&nbsp;</div>{{/labels}}</td><td>{{badges.votes}}</td></tr>{{/cards}}</tbody></table>{{/lists}}";
+	var htmltemplate="<h1><span id='download'></span><span id='trello-link'></span>{{name}} <span class='right'>{{#formatDate}}now{{/formatDate}}</span></h1>{{#lists}}<table><caption><h2>{{name}} <span class='show right'>{{size}}</span></h2></caption>{{#show}}<col width='20%' /><col width='30%' /><col width='5%' /><col width='25%' /><col width='5%' /><col width='10%' /><col width='5%' /><thead><tr>{{#displayColumns}}<th scope='col'>{{.}}</th>{{/displayColumns}}</tr></thead>{{/show}}<tbody>{{#cards}}<tr><td scope='row'><b>{{name}}</b></td><td><div class='comments'>{{#formatComments}}{{desc}}{{/formatComments}}</div></td><td>{{#formatDate}}{{due}}{{/formatDate}}</td><td>{{#checklist}}<div>{{{.}}}</div>{{/checklist}}</td><td>{{#members}}<div>{{.}}</div>{{/members}}</td><td>{{#labels}}<div class='show {{color}}'>{{name}}&nbsp;</div>{{/labels}}</td><td>{{badges.votes}}</td></tr>{{/cards}}</tbody></table>{{/lists}}";
+	var csvtemplate="";//TODO
 
-	var str=Mustache.render(template,board);
+	var str=Mustache.render(htmltemplate,board);
 	$("#view").html(str);
 
 	// Download Button
 	var download="<!DOCTYPE html><html><head><meta charset='utf-8' /><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
 	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
-	var button=$("#download");
-	button.addClass("downloader");
-	button.text("Download");
-	button.click(function(){
+	var button1=$("#download");
+	button1.addClass("downloader");
+	button1.text("Save HTML");
+	button1.click(function(){
 		console.log("saving..");
 		var bb=new BlobBuilder();
 		bb.append(download);
 		var filesaver=saveAs(bb.getBlob("text/html;charset=utf-8"),board.name+"_"+board.formatDate()('now')+".html");
 	});
+		var button1=$("#trello-link");
+	button1.addClass("downloader");
+	button1.text("Trello");
+	button1.click(function(){
+		location=board.url;
+	});
+
 	//button.click(function(){location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);});
 	});
 };
