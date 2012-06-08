@@ -186,6 +186,24 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87e0fd', end
           transition-property: left, right, top;
 }
 
+@media print{
+.downloader,.info-list{
+ display:none;
+}
+caption,table{
+box-shadow:none!important;
+background:none!important;
+-webkit-border-radius:0;
+-moz-border-radius:0;
+-ms-border-radius:0;
+-o-border-radius:0;
+border-radius:0;
+border-spacing:0;margin:0;
+}
+h1{color:black;}
+th,td{border:#999 solid 1px;}
+}
+.show{border:#999 solid 1px;}
 </style>
 
 </head>
