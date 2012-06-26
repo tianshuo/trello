@@ -68,7 +68,13 @@ var listBoards=function(){
 		myself.orgBoards=_.map(categories,function(value,key){ // Create Array of Organizations containing Array of Boards
 			var list={};
 			list.boards=value;
-			list.name=(key!==""||key===null)?orgList[key][0].displayName:"Personal";
+			if(key===""||key===null){
+				list.name="Personal";
+			}else if(!orgList.hasOwnProperty(key)){
+				list.name="External Organization";
+			}else{
+				list.name=orgList[key][0].displayName
+			}
 			return list;
 		});
 	}
