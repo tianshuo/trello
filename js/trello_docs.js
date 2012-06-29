@@ -1,8 +1,8 @@
 // Okay I admit the code is ugly...
-if (typeof console === "undefined" || typeof console.log === "undefined") {
+if (typeof console === "undefined" || typeof console.log === "undefined") { //Fix IE window.console bug
  console = {};
  console.log = function() {};
-}
+} 
 
 $(document).ready(function(){
 	var defaultOptions = {
@@ -80,7 +80,7 @@ var listBoards=function(){
 	}
 
 	$("#view").empty();
-	var intro="<div class='list info-list'><h2>About Trello2HTML</h2><p>This is an web app to export Trello Boards to HTML, our team uses this to record our progress every month. We do not track or record you any way, and Trello access is read-only. You can host this on any static server. Google Chrome is tested and supported, your mileage may vary with other browsers.</p><ul><a href='#4d5ea62fd76aa1136000000c'><li>Demo using Trello Development</li></a><a href='trello.zip'><li>Download zipped source</li></a><a href='https://trello.com/board/trello2html/4fb10d0e312c2b226f1eb4a0'><li>Feature Requests and Bug Reports</li></a><a href='http://tianshuohu.diandian.com/post/2012-06-08/Trello-Export-as-html'><li>Blog Article (Chinese/English)</li></a></ul></div>";
+	var intro="<div class='list info-list'><h2>About Trello2HTML</h2><p>This is an web app to export Trello Boards to HTML, our team uses this to record our progress every month. We do not track or record you any way, and Trello access is read-only. You can host this on any static server. Google Chrome is tested and supported, your mileage may vary with other browsers(Firefox has a bug when downloading).</p><ul><a href='#4d5ea62fd76aa1136000000c'><li>Demo using Trello Development</li></a><a href='trello.zip'><li>Download zipped source</li></a><a href='https://trello.com/board/trello2html/4fb10d0e312c2b226f1eb4a0'><li>Feature Requests and Bug Reports</li></a><a href='http://tianshuohu.diandian.com/post/2012-06-08/Trello-Export-as-html'><li>Blog Article (Chinese/English)</li></a></ul></div>";
 	var template="<h1>{{fullName}} ({{username}})</h1><div id='boardlist'>"+intro+"{{#orgBoards}}<div class='list'><h2>{{name}}</h2><ul>{{#boards}}<a href='#{{id}}' ><li>{{name}}</li></a>{{/boards}}</ul></div>{{/orgBoards}}</div>";
 	var str=Mustache.render(template,myself);
 	$("#view").html(str);
@@ -176,7 +176,8 @@ var getBoard=function(board){
 
 	// Download Button
 	var download="<!DOCTYPE html><html><head><meta charset='utf-8' /><title>"+board.name+"</title><style>"+$("style").text()+"</style></head><body>"+str+"</body></html>";
-	//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
+//this may work for firefox using application/data
+//location.href="data:text/html;charset=utf-8,"+encodeURIComponent(download);
 	var button1=$("#download");
 	button1.addClass("downloader");
 	button1.text("Save HTML");
