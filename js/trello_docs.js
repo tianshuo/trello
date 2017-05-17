@@ -109,14 +109,10 @@ var getBoard=function(board){
 			list.doneNumber=0;
 			list.totalNumber=list.checkItems.length || 0;
 			_.each(list.checkItems,function(item){ //Check complete
-				item.complete=_.find(card.checkItemStates, function(state){
-					if (state.idCheckItem==item.id&&state.state=="complete")
-					{
-						list.doneNumber++;
-						return true;
-					}
-					return false;
-				});
+				if(item.state=="complete"){
+					list.doneNumber++;
+					item.complete=true;
+				}else item.complete=false;
 			});
 			list.done=(list.doneNumber==list.totalNumber);
 			var template="<div><b>{{name}}</b> <span class='show right {{#done}}green{{/done}}'>{{doneNumber}}/{{totalNumber}}</span></div><ul>{{#checkItems}}<li>{{#complete}}<del>{{/complete}}{{name}}{{#complete}}</del>{{/complete}}</li>{{/checkItems}}</ul>";
