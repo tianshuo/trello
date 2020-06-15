@@ -9,6 +9,7 @@ $(document).ready(function(){
         scope: {
             write: false
         },
+        name: "Trello2HTML",
         success: initDoc
     };
 	if(typeof Trello==="undefined") {
